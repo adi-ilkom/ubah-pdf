@@ -150,11 +150,11 @@
         let extractedItems = [];
 
         dropZone.addEventListener('click', () => pdfFileInput.click());
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-indigo-500', 'bg-indigo-50/2oty'); });
-        dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('border-indigo-500', 'bg-indigo-50/2oty'); });
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-indigo-500', 'bg-indigo-50/20'); });
+        dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('border-indigo-500', 'bg-indigo-50/20'); });
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
-            dropZone.classList.remove('border-indigo-500', 'bg-indigo-50/2oty');
+            dropZone.classList.remove('border-indigo-500', 'bg-indigo-50/20');
             if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
         });
         pdfFileInput.addEventListener('change', (e) => {
@@ -228,13 +228,18 @@
                 const card = document.createElement('div');
                 card.className = `bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex flex-col justify-between ${sizeClass}`;
                 
-                // Format text to highlight potential numbering if present
                 let cleanText = item.content;
                 
+                // 1. Membersihkan teks watermark "banksoalut" yang mengganggu di akhir soal
+                cleanText = cleanText.replace(/(banksoalu[t]?\s*)+/gi, '');
+
+                // 2. Memisahkan A., B., C., D. ke baris baru agar rapi dan tidak menyambung
+                cleanText = cleanText.replace(/\s+([A-E]\.)\s+/g, '\n$1 ');
+
                 card.innerHTML = `
                     <div class="mb-2">
                         <span class="inline-block bg-indigo-50 text-indigo-700 text-xs font-bold px-2 py-0.5 rounded mb-2">Soal #${index + 1}</span>
-                        <div class="text-slate-800 whitespace-pre-wrap leading-relaxed">${escapeHtml(cleanText)}</div>
+                        <div class="text-slate-800 whitespace-pre-wrap leading-relaxed">${escapeHtml(cleanText.trim())}</div>
                     </div>
                     <div class="text-[10px] text-slate-400 text-right mt-3 border-t border-slate-100 pt-1">
                         Hal. Asli: ${item.pageNumber}
