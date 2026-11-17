@@ -13,44 +13,47 @@
     </script>
     <style>
         @media print {
-            /* Kunci ukuran kertas HVS/A4 dan marginnya */
-            @page { size: A4; margin: 10mm; }
-            body { background: white; color: black; -webkit-print-color-adjust: exact; }
+            /* Matikan margin bawaan browser, kita buat margin sendiri agar tidak tumpah */
+            @page { size: A4; margin: 0 !important; }
+            body { background: white; color: black; margin: 0; padding: 0; -webkit-print-color-adjust: exact; }
             no-print, header, footer, .no-print { display: none !important; }
             .print-container { box-shadow: none; padding: 0 !important; margin: 0 !important; width: 100%; max-width: none; border: none; }
             
-            /* Pembungkus utama yang dikunci setinggi 1 lembar A4 (277mm) */
+            /* Pembungkus halaman dibuat PAS persis 1 lembar A4 (210x297mm) */
             .print-page {
-                width: 100%;
-                height: 277mm !important; 
-                max-height: 277mm !important;
+                width: 210mm;
+                height: 296mm; /* Dikurangi 1mm untuk toleransi printer */
+                padding: 10mm; /* Margin buatan di dalam kertas */
+                box-sizing: border-box;
                 page-break-after: always;
                 break-after: page;
-                box-sizing: border-box;
                 display: grid;
                 gap: 4mm;
-                margin-bottom: 0 !important;
+                margin: 0 !important;
                 overflow: hidden; 
             }
             
-            /* Kotak soal dipaksa menyesuaikan grid tanpa boleh membesar sendiri */
+            /* Kunci kotak soal agar patuh pada grid */
             .q-card {
                 border: 1px solid #cbd5e1;
-                padding: 10px;
+                padding: 8px 10px;
                 display: flex;
                 flex-direction: column;
+                min-height: 0; /* PENTING: Memaksa kotak tidak membesar keluar jalur */
                 overflow: hidden;
+                break-inside: avoid;
             }
         }
         
-        /* Tampilan simulasi kertas HVS saat di layar HP/Laptop */
+        /* Tampilan di layar HP/PC (Simulasi Kertas) */
         .print-page {
             display: grid;
             gap: 16px;
             margin-bottom: 32px;
-            padding: 16px;
+            padding: 24px;
             background: white;
             border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             min-height: 800px; 
         }
         .q-card {
@@ -59,6 +62,7 @@
             border-radius: 8px;
             display: flex;
             flex-direction: column;
+            min-height: 0;
             overflow: hidden;
         }
     </style>
@@ -72,11 +76,8 @@
                 <div class="bg-indigo-600 text-white font-bold w-10 h-10 rounded-xl flex items-center justify-center text-lg shadow-md">AP</div>
                 <div>
                     <h1 class="font-bold text-slate-900 leading-tight">Perapi Soal Ujian</h1>
-                    <p class="text-xs text-slate-500">Oleh Adi Putra • Pasti Pas Selembar</p>
+                    <p class="text-xs text-slate-500">Oleh Adi Putra • Hemat Kertas HVS</p>
                 </div>
-            </div>
-            <div class="text-sm text-slate-600 hidden sm:block">
-                <span>Dokumen rapi, huruf otomatis mengecil jika soal panjang.</span>
             </div>
         </div>
     </header>
@@ -88,10 +89,9 @@
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8 no-print">
             <div class="max-w-xl mx-auto text-center mb-6">
                 <h2 class="text-2xl font-bold text-slate-900 mb-2">Unggah Dokumen PDF</h2>
-                <p class="text-sm text-slate-600">Pilih jumlah soal per lembar. Sistem akan memaksanya muat secara presisi, soal yang kepanjangan hurufnya akan otomatis dikecilkan.</p>
+                <p class="text-sm text-slate-600">Pilih jumlah soal per lembar. Huruf akan otomatis menyesuaikan agar pas tanpa ada teks yang terpotong.</p>
             </div>
 
-            <!-- Drag & Drop Upload Area -->
             <div id="dropZone" class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center cursor-pointer hover:border-indigo-500 transition bg-slate-50/50">
                 <input type="file" id="pdfFile" accept="application/pdf" class="hidden">
                 <div class="flex flex-col items-center">
@@ -105,7 +105,7 @@
             <!-- Configuration Options -->
             <div id="configSection" class="hidden mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6 border-t border-slate-100 max-w-2xl mx-auto">
                 <div>
-                    <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Target Jumlah Soal per Halaman</label>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Pilih Jumlah Soal per Halaman</label>
                     <select id="questionsPerPage" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-4 py-3 text-base font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none overflow-y-auto max-h-48">
                         <option value="5">5 Soal / Lembar</option>
                         <option value="6">6 Soal / Lembar</option>
@@ -200,11 +200,9 @@
                     const page = await pdfDoc.getPage(i);
                     const textContent = await page.getTextContent();
                     
-                    // Bersihkan spasi ganda bawaan PDF agar tidak melompong
-                    let textItems = textContent.items.map(item => item.str).join(' ').trim();
-                    textItems = textItems.replace(/ +/g, ' ');
+                    let textItems = textContent.items.map(item => item.str).join(' ');
 
-                    if (textItems.length > 0) {
+                    if (textItems.trim().length > 0) {
                         extractedItems.push({ pageNumber: i, content: textItems });
                     }
 
@@ -227,24 +225,25 @@
             }
         }
 
-        // Fungsi mencetak kotak html per soal
         function createCard(item, index, defaultFontSize) {
             const card = document.createElement('div');
             card.className = `q-card`;
             
+            // 1. Hapus watermark spam
             let cleanText = item.content.replace(/(banksoalu[t]?\s*)+/gi, '');
-            // Pindahkan ABCD ke baris baru
-            cleanText = cleanText.replace(/\s+([A-E]\.)\s+/g, '\n$1 ');
             
-            // Hapus spasi berlebih di setiap awal baris agar rata kiri sempurna
-            cleanText = cleanText.split('\n').map(line => line.trim()).join('\n');
+            // 2. Lumatkan SEMUA spasi kosong/enter bawaan PDF menjadi 1 baris utuh agar tidak melompong
+            cleanText = cleanText.replace(/\s+/g, ' ').trim();
+            
+            // 3. Pecah teks dengan enter SECARA PRESISI hanya ketika bertemu A., B., C., D.
+            cleanText = cleanText.replace(/\s+([A-E]\.)\s+/g, '\n$1 ');
 
             card.innerHTML = `
                 <div class="mb-1 shrink-0 flex justify-between items-center border-b border-slate-100 pb-1">
                     <span class="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded">Soal #${index + 1}</span>
                     <span class="text-[9px] text-slate-400 no-print">Hal: ${item.pageNumber}</span>
                 </div>
-                <div class="q-content flex-grow overflow-hidden text-slate-800 text-left whitespace-pre-wrap leading-tight" style="font-size: ${defaultFontSize}px;">${escapeHtml(cleanText)}</div>
+                <div class="q-content flex-grow text-slate-800 text-left whitespace-pre-wrap" style="font-size: ${defaultFontSize}px; line-height: 1.25; overflow: hidden;">${escapeHtml(cleanText)}</div>
             `;
             return card;
         }
@@ -255,9 +254,10 @@
 
             let gridColumns, gridRows, defaultFontSize;
 
-            if (limit === 5) { gridColumns = 1; gridRows = 5; defaultFontSize = 16; }
-            else if (limit === 6) { gridColumns = 1; gridRows = 6; defaultFontSize = 15; }
-            else if (limit === 7) { gridColumns = 2; gridRows = 4; defaultFontSize = 14; } 
+            // Logika Pembagian Kotak (Kolom x Baris)
+            if (limit === 5) { gridColumns = 1; gridRows = 5; defaultFontSize = 15; }
+            else if (limit === 6) { gridColumns = 1; gridRows = 6; defaultFontSize = 14; }
+            else if (limit === 7) { gridColumns = 2; gridRows = 4; defaultFontSize = 13; } 
             else if (limit === 8) { gridColumns = 2; gridRows = 4; defaultFontSize = 13; }
             else if (limit === 9) { gridColumns = 2; gridRows = 5; defaultFontSize = 12; }
             else if (limit === 10) { gridColumns = 2; gridRows = 5; defaultFontSize = 12; }
@@ -280,16 +280,23 @@
                 questionsRoot.appendChild(pageWrapper);
             }
 
-            setTimeout(autoShrinkText, 100); 
+            // Tunggu layout terpasang, lalu eksekusi fitur auto-shrink huruf
+            setTimeout(autoShrinkText, 150); 
         }
 
         function autoShrinkText() {
-            const contentBoxes = document.querySelectorAll('.q-content');
-            contentBoxes.forEach(box => {
-                let currentSize = parseFloat(window.getComputedStyle(box).fontSize);
-                while (box.scrollHeight > box.clientHeight && currentSize > 6) {
+            const cards = document.querySelectorAll('.q-card');
+            cards.forEach(card => {
+                const content = card.querySelector('.q-content');
+                let currentSize = parseFloat(content.style.fontSize);
+                
+                let safetyLoop = 20; // Batas aman agar browser tidak hang
+                // Jika teks masih menumpuk melebihi tinggi kotak, kecilkan hurufnya!
+                while (card.scrollHeight > card.clientHeight && currentSize > 5 && safetyLoop > 0) {
                     currentSize -= 0.5;
-                    box.style.fontSize = currentSize + 'px';
+                    content.style.fontSize = currentSize + 'px';
+                    content.style.lineHeight = '1.15'; // Rapikan jarak baris
+                    safetyLoop--;
                 }
             });
         }
