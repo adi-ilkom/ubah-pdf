@@ -13,7 +13,7 @@
     </script>
     <style>
         @media print {
-            /* Kunci mutlak ukuran kertas HVS/A4 dan marginnya */
+            /* Kunci ukuran kertas HVS/A4 dan marginnya */
             @page { size: A4; margin: 10mm; }
             body { background: white; color: black; -webkit-print-color-adjust: exact; }
             no-print, header, footer, .no-print { display: none !important; }
@@ -30,7 +30,7 @@
                 display: grid;
                 gap: 4mm;
                 margin-bottom: 0 !important;
-                overflow: hidden; /* Dilarang keras tumpah ke halaman 2 */
+                overflow: hidden; 
             }
             
             /* Kotak soal dipaksa menyesuaikan grid tanpa boleh membesar sendiri */
@@ -51,7 +51,7 @@
             padding: 16px;
             background: white;
             border: 1px solid #e2e8f0;
-            min-height: 800px; /* Simulasi tinggi */
+            min-height: 800px; 
         }
         .q-card {
             border: 1px solid #e2e8f0;
@@ -102,22 +102,22 @@
                 </div>
             </div>
 
-            <!-- Configuration Options (Sudah Disederhanakan) -->
+            <!-- Configuration Options -->
             <div id="configSection" class="hidden mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6 border-t border-slate-100 max-w-2xl mx-auto">
                 <div>
                     <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Target Jumlah Soal per Halaman</label>
                     <select id="questionsPerPage" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-4 py-3 text-base font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none overflow-y-auto max-h-48">
-                        <option value="5">Mutlak 5 Soal / Lembar</option>
-                        <option value="6">Mutlak 6 Soal / Lembar</option>
-                        <option value="7">Mutlak 7 Soal / Lembar</option>
-                        <option value="8">Mutlak 8 Soal / Lembar</option>
-                        <option value="9">Mutlak 9 Soal / Lembar</option>
-                        <option value="10" selected>Mutlak 10 Soal / Lembar (Ideal)</option>
-                        <option value="11">Mutlak 11 Soal / Lembar</option>
-                        <option value="12">Mutlak 12 Soal / Lembar</option>
-                        <option value="13">Mutlak 13 Soal / Lembar</option>
-                        <option value="14">Mutlak 14 Soal / Lembar</option>
-                        <option value="15">Mutlak 15 Soal / Lembar (Paling Padat)</option>
+                        <option value="5">5 Soal / Lembar</option>
+                        <option value="6">6 Soal / Lembar</option>
+                        <option value="7">7 Soal / Lembar</option>
+                        <option value="8">8 Soal / Lembar</option>
+                        <option value="9">9 Soal / Lembar</option>
+                        <option value="10" selected>10 Soal / Lembar (Ideal)</option>
+                        <option value="11">11 Soal / Lembar</option>
+                        <option value="12">12 Soal / Lembar</option>
+                        <option value="13">13 Soal / Lembar</option>
+                        <option value="14">14 Soal / Lembar</option>
+                        <option value="15">15 Soal / Lembar (Padat)</option>
                     </select>
                 </div>
                 <div class="flex items-end">
@@ -176,7 +176,6 @@
             if (e.target.files.length) handleFile(e.target.files[0]);
         });
 
-        // Setiap kali ganti angka di dropdown, tata ulang halamannya
         questionsPerPage.addEventListener('change', renderQuestions);
         printBtn.addEventListener('click', () => window.print());
 
@@ -200,7 +199,10 @@
                 for (let i = 1; i <= numPages; i++) {
                     const page = await pdfDoc.getPage(i);
                     const textContent = await page.getTextContent();
-                    const textItems = textContent.items.map(item => item.str).join(' ').trim();
+                    
+                    // Bersihkan spasi ganda bawaan PDF agar tidak melompong
+                    let textItems = textContent.items.map(item => item.str).join(' ').trim();
+                    textItems = textItems.replace(/ +/g, ' ');
 
                     if (textItems.length > 0) {
                         extractedItems.push({ pageNumber: i, content: textItems });
@@ -230,18 +232,19 @@
             const card = document.createElement('div');
             card.className = `q-card`;
             
-            // Bersihkan teks spam dan tata baris ABCD-nya
             let cleanText = item.content.replace(/(banksoalu[t]?\s*)+/gi, '');
+            // Pindahkan ABCD ke baris baru
             cleanText = cleanText.replace(/\s+([A-E]\.)\s+/g, '\n$1 ');
+            
+            // Hapus spasi berlebih di setiap awal baris agar rata kiri sempurna
+            cleanText = cleanText.split('\n').map(line => line.trim()).join('\n');
 
             card.innerHTML = `
                 <div class="mb-1 shrink-0 flex justify-between items-center border-b border-slate-100 pb-1">
                     <span class="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded">Soal #${index + 1}</span>
                     <span class="text-[9px] text-slate-400 no-print">Hal: ${item.pageNumber}</span>
                 </div>
-                <div class="q-content flex-grow overflow-hidden text-slate-800 whitespace-pre-wrap leading-tight" style="font-size: ${defaultFontSize}px;">
-                    ${escapeHtml(cleanText.trim())}
-                </div>
+                <div class="q-content flex-grow overflow-hidden text-slate-800 text-left whitespace-pre-wrap leading-tight" style="font-size: ${defaultFontSize}px;">${escapeHtml(cleanText)}</div>
             `;
             return card;
         }
@@ -250,22 +253,19 @@
             const limit = parseInt(questionsPerPage.value);
             questionsRoot.innerHTML = '';
 
-            // Menentukan Layout Mutlak berdasarkan pilihan Limit
             let gridColumns, gridRows, defaultFontSize;
 
             if (limit === 5) { gridColumns = 1; gridRows = 5; defaultFontSize = 16; }
             else if (limit === 6) { gridColumns = 1; gridRows = 6; defaultFontSize = 15; }
-            else if (limit === 7) { gridColumns = 2; gridRows = 4; defaultFontSize = 14; } // 2 kolom x 4 baris = muat 8, diisi 7
+            else if (limit === 7) { gridColumns = 2; gridRows = 4; defaultFontSize = 14; } 
             else if (limit === 8) { gridColumns = 2; gridRows = 4; defaultFontSize = 13; }
             else if (limit === 9) { gridColumns = 2; gridRows = 5; defaultFontSize = 12; }
             else if (limit === 10) { gridColumns = 2; gridRows = 5; defaultFontSize = 12; }
             else if (limit === 11 || limit === 12) { gridColumns = 3; gridRows = 4; defaultFontSize = 11; }
             else if (limit >= 13 && limit <= 15) { gridColumns = 3; gridRows = 5; defaultFontSize = 10; }
 
-            // Rumus rahasia agar browser tidak punya pilihan lain selain nurut
             const gridStyle = `grid-template-columns: repeat(${gridColumns}, 1fr); grid-template-rows: repeat(${gridRows}, 1fr);`;
 
-            // Proses pemotongan per halaman
             for (let i = 0; i < extractedItems.length; i += limit) {
                 const chunk = extractedItems.slice(i, i + limit);
                 
@@ -280,7 +280,6 @@
                 questionsRoot.appendChild(pageWrapper);
             }
 
-            // AUTO-SHRINK JS: Mengecilkan huruf jika soal panjang melebih kotak!
             setTimeout(autoShrinkText, 100); 
         }
 
@@ -288,7 +287,6 @@
             const contentBoxes = document.querySelectorAll('.q-content');
             contentBoxes.forEach(box => {
                 let currentSize = parseFloat(window.getComputedStyle(box).fontSize);
-                // Selama isi teks tumpah (scrollHeight lebih besar dari ukuran kotaknya), kecilkan hurufnya!
                 while (box.scrollHeight > box.clientHeight && currentSize > 6) {
                     currentSize -= 0.5;
                     box.style.fontSize = currentSize + 'px';
