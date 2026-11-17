@@ -15,7 +15,14 @@
         @media print {
             body { background: white; color: black; }
             no-print, header, footer, .no-print { display: none !important; }
-            .print-container { box-shadow: none; padding: 0; margin: 0; width: 100%; }
+            /* Memaksimalkan area kertas HVS */
+            .print-container { box-shadow: none; padding: 0 !important; margin: 0 !important; width: 100%; max-width: none; border: none; }
+            /* Memaksa ganti halaman kertas sesuai batasan soal per lembar */
+            .page-break { page-break-after: always; break-after: page; padding-top: 10px; }
+            /* ANTI-TERPOTONG: Memaksa browser tidak membelah 1 soal jadi 2 kertas */
+            .break-inside-avoid { break-inside: avoid !important; page-break-inside: avoid !important; margin-bottom: 4px; }
+            /* Memadatkan kartu soal saat dicetak agar hemat tempat */
+            .print-card { padding: 8px 12px !important; margin: 0 !important; border: 1px solid #cbd5e1; }
         }
     </style>
 </head>
@@ -44,7 +51,7 @@
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8 no-print">
             <div class="max-w-xl mx-auto text-center mb-6">
                 <h2 class="text-2xl font-bold text-slate-900 mb-2">Unggah Dokumen Soal PDF</h2>
-                <p class="text-sm text-slate-600">Sistem otomatis mengekstrak halaman yang boros (1 soal/halaman) dan menyusunnya padat menjadi multi-kolom siap cetak.</p>
+                <p class="text-sm text-slate-600">Sistem otomatis mengekstrak halaman yang boros dan menyusunnya padat siap cetak.</p>
             </div>
 
             <!-- Drag & Drop Upload Area -->
@@ -55,32 +62,49 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                     </svg>
                     <p class="text-base font-semibold text-slate-700 mb-1">Tarik file PDF ke sini atau <span class="text-indigo-600 underline">pilih file</span></p>
-                    <p class="text-xs text-slate-400">Mendukung file PDF latihan soal, kisi-kisi, dan bank soal.</p>
+                    <p class="text-xs text-slate-400">Mendukung file kisi-kisi, ujian, dan bank soal.</p>
                 </div>
             </div>
 
             <!-- Configuration Options -->
-            <div id="configSection" class="hidden mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-slate-100">
+            <div id="configSection" class="hidden mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-6 border-t border-slate-100">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-2">Jumlah Kolom Tampilan</label>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-2">Jml Kolom Cetak</label>
                     <select id="columnLayout" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                        <option value="1">1 Kolom (Standar)</option>
-                        <option value="2" selected>2 Kolom (Hemat Kertas)</option>
-                        <option value="3">3 Kolom (Sangat Padat)</option>
+                        <option value="1">1 Kolom</option>
+                        <option value="2" selected>2 Kolom</option>
+                        <option value="3">3 Kolom</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-2">Ukuran Font Soal</label>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-2">Soal per Lembar HVS</label>
+                    <select id="questionsPerPage" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none overflow-y-auto max-h-48">
+                        <option value="auto">Otomatis (Tanpa Batas)</option>
+                        <option value="5">5 Soal/Lembar</option>
+                        <option value="6">6 Soal/Lembar</option>
+                        <option value="7">7 Soal/Lembar</option>
+                        <option value="8">8 Soal/Lembar</option>
+                        <option value="9">9 Soal/Lembar</option>
+                        <option value="10" selected>10 Soal/Lembar</option>
+                        <option value="11">11 Soal/Lembar</option>
+                        <option value="12">12 Soal/Lembar</option>
+                        <option value="13">13 Soal/Lembar</option>
+                        <option value="14">14 Soal/Lembar</option>
+                        <option value="15">15 Soal/Lembar</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-2">Ukuran Font</label>
                     <select id="fontSize" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                        <option value="text-xs">Kecil (Sangat Padat)</option>
-                        <option value="text-sm" selected>Sedang (Ideal)</option>
-                        <option value="text-base">Besar (Mudah Dibaca)</option>
+                        <option value="text-[10px]">Sangat Kecil</option>
+                        <option value="text-xs" selected>Kecil (Ideal)</option>
+                        <option value="text-sm">Sedang</option>
                     </select>
                 </div>
                 <div class="flex items-end">
                     <button id="printBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg text-sm transition shadow-sm flex items-center justify-center space-x-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                        <span>Cetak / Simpan PDF</span>
+                        <span>Cetak PDF</span>
                     </button>
                 </div>
             </div>
@@ -110,25 +134,18 @@
                 </div>
             </div>
 
-            <!-- Questions Grid Output -->
-            <div id="questionsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Root Container untuk menampung lembaran soal -->
+            <div id="questionsRoot">
                 <!-- Soal akan dimuat otomatis lewat JS di sini -->
             </div>
 
             <!-- Footer Watermark / Signature -->
-            <div class="mt-8 pt-4 border-t border-slate-100 text-center text-xs text-slate-400">
+            <div class="mt-8 pt-4 border-t border-slate-100 text-center text-[10px] text-slate-400 no-print">
                 <span>Disusun rapi menggunakan alat pribadi — &copy; 2026 Adi Putra</span>
             </div>
         </div>
 
     </main>
-
-    <!-- Footer -->
-    <footer class="bg-white border-t border-slate-200 py-4 mt-auto no-print">
-        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500">
-            <span>&copy; 2026 Adi Putra • Solusi Cetak Dokumen Efisien</span>
-        </div>
-    </footer>
 
     <!-- Script Processing Logic -->
     <script>
@@ -140,9 +157,10 @@
         const progressText = document.getElementById('progressText');
         const progressPercent = document.getElementById('progressPercent');
         const previewContainer = document.getElementById('previewContainer');
-        const questionsGrid = document.getElementById('questionsGrid');
+        const questionsRoot = document.getElementById('questionsRoot');
         const totalQuestionsCount = document.getElementById('totalQuestionsCount');
         const columnLayout = document.getElementById('columnLayout');
+        const questionsPerPage = document.getElementById('questionsPerPage');
         const fontSizeSelect = document.getElementById('fontSize');
         const printBtn = document.getElementById('printBtn');
         const docTitle = document.getElementById('docTitle');
@@ -161,14 +179,10 @@
             if (e.target.files.length) handleFile(e.target.files[0]);
         });
 
-        columnLayout.addEventListener('change', updateGridColumns);
+        columnLayout.addEventListener('change', renderQuestions);
+        questionsPerPage.addEventListener('change', renderQuestions);
         fontSizeSelect.addEventListener('change', renderQuestions);
         printBtn.addEventListener('click', () => window.print());
-
-        function updateGridColumns() {
-            const cols = columnLayout.value;
-            questionsGrid.className = `grid gap-4 grid-cols-1 ${cols == '2' ? 'md:grid-cols-2' : cols == '3' ? 'md:grid-cols-3' : 'md:grid-cols-1'}`;
-        }
 
         async function handleFile(file) {
             if (file.type !== 'application/pdf') {
@@ -195,10 +209,7 @@
                     const textItems = textContent.items.map(item => item.str).join(' ').trim();
 
                     if (textItems.length > 0) {
-                        extractedItems.push({
-                            pageNumber: i,
-                            content: textItems
-                        });
+                        extractedItems.push({ pageNumber: i, content: textItems });
                     }
 
                     const percent = Math.round((i / numPages) * 100);
@@ -220,33 +231,65 @@
             }
         }
 
+        function createCard(item, index, sizeClass) {
+            const card = document.createElement('div');
+            // Menambahkan break-inside-avoid agar kotak soal ini dilarang terbelah jadi 2 kertas
+            card.className = `break-inside-avoid bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col justify-start ${sizeClass} print-card h-full`;
+            
+            let cleanText = item.content;
+            cleanText = cleanText.replace(/(banksoalu[t]?\s*)+/gi, '');
+            cleanText = cleanText.replace(/\s+([A-E]\.)\s+/g, '\n$1 ');
+
+            card.innerHTML = `
+                <div class="mb-1">
+                    <span class="inline-block bg-indigo-50 text-indigo-700 text-[10px] font-bold px-1.5 py-0.5 rounded mb-1">Soal #${index + 1}</span>
+                    <div class="text-slate-800 whitespace-pre-wrap leading-snug">${escapeHtml(cleanText.trim())}</div>
+                </div>
+                <div class="text-[9px] text-slate-400 text-right mt-1 pt-1 no-print border-t border-slate-100">
+                    Hal Asli: ${item.pageNumber}
+                </div>
+            `;
+            return card;
+        }
+
         function renderQuestions() {
             const sizeClass = fontSizeSelect.value;
-            questionsGrid.innerHTML = '';
+            const cols = columnLayout.value;
+            const perPageSetting = questionsPerPage.value;
+            
+            const gridClass = `grid gap-4 grid-cols-1 ${cols == '2' ? 'md:grid-cols-2 print:grid-cols-2' : cols == '3' ? 'md:grid-cols-3 print:grid-cols-3' : 'md:grid-cols-1 print:grid-cols-1'}`;
+            
+            questionsRoot.innerHTML = '';
 
-            extractedItems.forEach((item, index) => {
-                const card = document.createElement('div');
-                card.className = `bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex flex-col justify-between ${sizeClass}`;
-                
-                let cleanText = item.content;
-                
-                // 1. Membersihkan teks watermark "banksoalut" yang mengganggu di akhir soal
-                cleanText = cleanText.replace(/(banksoalu[t]?\s*)+/gi, '');
+            // Mode Otomatis (Tanpa batas paksa, hanya dilarang potong tengah soal)
+            if (perPageSetting === 'auto') {
+                const gridContainer = document.createElement('div');
+                gridContainer.className = gridClass;
+                extractedItems.forEach((item, index) => {
+                    gridContainer.appendChild(createCard(item, index, sizeClass));
+                });
+                questionsRoot.appendChild(gridContainer);
+            } 
+            // Mode Pembatasan Soal (5 - 15)
+            else {
+                const limit = parseInt(perPageSetting);
+                for (let i = 0; i < extractedItems.length; i += limit) {
+                    const chunk = extractedItems.slice(i, i + limit);
+                    
+                    const pageWrapper = document.createElement('div');
+                    pageWrapper.className = 'page-break mb-8'; 
 
-                // 2. Memisahkan A., B., C., D. ke baris baru agar rapi dan tidak menyambung
-                cleanText = cleanText.replace(/\s+([A-E]\.)\s+/g, '\n$1 ');
-
-                card.innerHTML = `
-                    <div class="mb-2">
-                        <span class="inline-block bg-indigo-50 text-indigo-700 text-xs font-bold px-2 py-0.5 rounded mb-2">Soal #${index + 1}</span>
-                        <div class="text-slate-800 whitespace-pre-wrap leading-relaxed">${escapeHtml(cleanText.trim())}</div>
-                    </div>
-                    <div class="text-[10px] text-slate-400 text-right mt-3 border-t border-slate-100 pt-1">
-                        Hal. Asli: ${item.pageNumber}
-                    </div>
-                `;
-                questionsGrid.appendChild(card);
-            });
+                    const gridContainer = document.createElement('div');
+                    gridContainer.className = gridClass;
+                    
+                    chunk.forEach((item, index) => {
+                        gridContainer.appendChild(createCard(item, i + index, sizeClass));
+                    });
+                    
+                    pageWrapper.appendChild(gridContainer);
+                    questionsRoot.appendChild(pageWrapper);
+                }
+            }
         }
 
         function escapeHtml(text) {
