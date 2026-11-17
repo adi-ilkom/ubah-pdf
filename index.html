@@ -83,12 +83,12 @@
                 <div>
                     <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Target Jumlah Soal per Halaman</label>
                     <select id="questionsPerPage" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-4 py-3 text-base font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                        <option value="5">5 Soal / Lembar</option>
+                        <option value="5" selected>5 Soal / Lembar</option>
                         <option value="6">6 Soal / Lembar</option>
                         <option value="7">7 Soal / Lembar</option>
                         <option value="8">8 Soal / Lembar</option>
                         <option value="9">9 Soal / Lembar</option>
-                        <option value="10" selected>10 Soal / Lembar</option>
+                        <option value="10">10 Soal / Lembar</option>
                         <option value="11">11 Soal / Lembar</option>
                         <option value="12">12 Soal / Lembar</option>
                         <option value="13">13 Soal / Lembar</option>
@@ -135,7 +135,6 @@
 
         let extractedItems = [];
 
-        // Mengembalikan fitur klik dan Drag-and-Drop
         dropZone.addEventListener('click', () => pdfFileInput.click());
         
         dropZone.addEventListener('dragover', (e) => {
@@ -244,6 +243,7 @@
                 const pageWrapper = document.createElement('div');
                 pageWrapper.className = 'print-page'; 
                 
+                // Gunakan grid standar Tailwind untuk pembagian kolom yang aman
                 const gridContainer = document.createElement('div');
                 gridContainer.className = `grid gap-4 grid-cols-${gridColumns}`;
                 
